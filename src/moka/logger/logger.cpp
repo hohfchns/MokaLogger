@@ -33,7 +33,7 @@ namespace moka::log
         throw std::runtime_error("Failed to open / create log file at `" + config.filePath + "`");
       }
 
-      logFile << formattedStr << std::endl;
+      logFile << formattedStr << "\n";
     }
   }
 
