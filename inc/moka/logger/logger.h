@@ -1,17 +1,16 @@
 #pragma once
 #include <fstream>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <unordered_map>
 
-#define MOKA_LOG(level, str) moka::log::Logger::activeLogger->Log(level, str, __LINE__, __FILE__)
+#define MOKA_LOG(level, str) moka::log::Logger::GetActiveLogger()->Log(level, str, __LINE__, __FILE__)
 #define MOKA_LOG_DEBUG(str) MOKA_LOG(moka::log::LogLevel::DEBUG, str)
 #define MOKA_LOG_INFO(str) MOKA_LOG(moka::log::LogLevel::INFO, str)
 #define MOKA_LOG_WARNING(str) MOKA_LOG(moka::log::LogLevel::WARNING, str)
 #define MOKA_LOG_ERROR(str) MOKA_LOG(moka::log::LogLevel::ERROR, str)
 
-#define MOKA_LOGF(level, format, ...) moka::log::Logger::activeLogger->LogFormat(level, format, __LINE__, __FILE__, __VA_ARGS__)
+#define MOKA_LOGF(level, format, ...) moka::log::Logger::GetActiveLogger()->LogFormat(level, format, __LINE__, __FILE__, __VA_ARGS__)
 #define MOKA_LOGF_DEBUG(format, ...) MOKA_LOGF(moka::log::LogLevel::DEBUG, format, __VA_ARGS__)
 #define MOKA_LOGF_INFO(format, ...) MOKA_LOGF(moka::log::LogLevel::INFO, format, __VA_ARGS__)
 #define MOKA_LOGF_WARNING(format, ...) MOKA_LOGF(moka::log::LogLevel::WARNING, format, __VA_ARGS__)
@@ -51,7 +50,8 @@ namespace moka::log
   class Logger
   {
   public:
-    static Logger* activeLogger;
+    static Logger* GetActiveLogger();
+    static void SetActiveLogger(Logger* logger);
 
     void Log(LogLevel level, const std::string& str, size_t line, const char* file);
 
@@ -72,9 +72,12 @@ namespace moka::log
 
     // Warning - config will be moved
     void SetConfig(LoggerConfig& config);
+    void SetConfig(LoggerConfig&& config);
     const LoggerConfig& GetConfig() const;
 
   private:
+    static Logger* activeLogger;
+
     std::ofstream logFile;
     LoggerConfig config;
 

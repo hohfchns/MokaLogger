@@ -1,6 +1,5 @@
-#include <cstdarg>
-#include <memory>
 #include <stdexcept>
+#include <iostream>
 #include "moka/logger/logger.h"
 
 using std::to_string;
@@ -40,6 +39,16 @@ namespace moka::log
 
   void Logger::SetConfig(LoggerConfig& config)
   {
+    this->config = std::move(config);
+
+    if (logFile.is_open())
+    {
+      logFile.close();
+    }
+  }
+
+  void Logger::SetConfig(LoggerConfig&& config)
+  {
     this->config = config;
 
     if (logFile.is_open())
@@ -51,6 +60,16 @@ namespace moka::log
   const LoggerConfig& Logger::GetConfig() const
   {
     return config;
+  }
+
+  Logger* Logger::GetActiveLogger()
+  {
+    return activeLogger;
+  }
+
+  void Logger::SetActiveLogger(Logger* logger)
+  {
+    activeLogger = logger;
   }
 }
 
@@ -72,7 +91,7 @@ std::string to_string(const moka::log::LogLevel& logLevel)
       str = "ERROR";
       break;
     case moka::log::LogLevel::DEBUG:
-      str = "ERROR";
+      str = "DEBUG";
       break;
   }
 
