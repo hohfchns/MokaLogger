@@ -14,9 +14,9 @@ static char g_exePath[EXE_DIR_MAX_CHARACTERS];
 TEST(LoggerTest, BasicUsage) {
   RETRIEVE_EXE_PATH();
   std::string path = std::filesystem::path(std::string(g_exePath)).parent_path().string() + "/log.log";
-  auto config = moka::log::Logger::GetActiveLogger()->GetConfig();
+  auto config = moka::log::Logger::GetDefaultLogger()->GetConfig();
   config.filePath = path;
-  moka::log::Logger::GetActiveLogger()->SetConfig(config);
+  moka::log::Logger::GetDefaultLogger()->SetConfig(config);
   MOKA_LOG_INFO("Hello Moka!");
   MOKA_LOGF_INFO("Info %s!", "Moka");
   MOKA_LOGF_WARNING("Warning %s!", "Moka");

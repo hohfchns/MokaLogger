@@ -6,9 +6,10 @@ using std::to_string;
 
 namespace moka::log
 {
-  Logger* Logger::activeLogger = new Logger;
+  Logger* Logger::defaultLogger = new Logger;
 
-  void Logger::Log(LogLevel level, const std::string& str, size_t line, const char* file)
+
+  void Logger::Log(LogLevel level, const std::string& str, size_t line, const char* file) const
   {
     std::string formattedStr = "LOG::Level " + to_string(level) + "::FILE `" + file + "`::LINE " + to_string(line) + "::MESSAGE | `" + str + "`";
     if (level >= config.level)
@@ -23,23 +24,16 @@ namespace moka::log
 
     if (config.alwaysLogToFile || level >= config.level)
     {
-      if (!logFile.is_open())
-      {
-        logFile.open(config.filePath, std::ios::out | std::ios::app);
-      }
-
-      if (!logFile.is_open())
-      {
-        throw std::runtime_error("Failed to open / create log file at `" + config.filePath + "`");
-      }
-
       logFile << formattedStr << "\n";
     }
   }
 
-  void Logger::SetConfig(LoggerConfig& config)
+  Logger::~Logger()
   {
-    this->config = std::move(config);
+    if (this == Logger::defaultLogger)
+    {
+      MOKA_LOG_ERROR("Default logger was deleted!");
+    }
 
     if (logFile.is_open())
     {
@@ -47,14 +41,60 @@ namespace moka::log
     }
   }
 
-  void Logger::SetConfig(LoggerConfig&& config)
+  void Logger::OpenLogFileFromConfig()
   {
-    this->config = config;
-
     if (logFile.is_open())
     {
       logFile.close();
     }
+
+    auto mode = std::ios::out;
+    if (config.appendToFile)
+    {
+      mode |= std::ios::app;
+    }
+
+    logFile.open(config.filePath, mode);
+
+    if (!logFile.is_open())
+    {
+      throw std::runtime_error("Failed to open / create log file at `" + config.filePath + "`");
+    }
+  }
+
+  void Logger::SetConfigBase(LoggerConfig&& config, bool openFile)
+  {
+    if (this->config.filePath == config.filePath)
+    {
+      return;
+    }
+
+    this->config = std::move(config);
+
+    if (this->config.filePath.empty())
+    {
+      if (logFile.is_open())
+      {
+        logFile.close();
+      }
+
+      return;
+    }
+
+    if (openFile)
+    {
+      OpenLogFileFromConfig();
+    }
+  }
+
+  void Logger::SetConfig(LoggerConfig& config, bool openFile)
+  {
+    SetConfigBase(std::move(config), openFile);
+  }
+
+  void Logger::SetConfig(LoggerConfig&& config, bool openFile)
+  {
+    SetConfigBase(std::move(config), openFile);
   }
 
   const LoggerConfig& Logger::GetConfig() const
@@ -62,14 +102,14 @@ namespace moka::log
     return config;
   }
 
-  Logger* Logger::GetActiveLogger()
+  Logger* Logger::GetDefaultLogger()
   {
-    return activeLogger;
+    return defaultLogger;
   }
 
-  void Logger::SetActiveLogger(Logger* logger)
+  void Logger::SetDefaultLogger(Logger* logger)
   {
-    activeLogger = logger;
+    defaultLogger = logger;
   }
 }
 

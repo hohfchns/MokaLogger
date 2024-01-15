@@ -4,13 +4,13 @@
 #include <string>
 #include <unordered_map>
 
-#define MOKA_LOG(level, str) moka::log::Logger::GetActiveLogger()->Log(level, str, __LINE__, __FILE__)
+#define MOKA_LOG(level, str) moka::log::Logger::GetDefaultLogger()->Log(level, str, __LINE__, __FILE__)
 #define MOKA_LOG_DEBUG(str) MOKA_LOG(moka::log::LogLevel::DEBUG, str)
 #define MOKA_LOG_INFO(str) MOKA_LOG(moka::log::LogLevel::INFO, str)
 #define MOKA_LOG_WARNING(str) MOKA_LOG(moka::log::LogLevel::WARNING, str)
 #define MOKA_LOG_ERROR(str) MOKA_LOG(moka::log::LogLevel::ERROR, str)
 
-#define MOKA_LOGF(level, format, ...) moka::log::Logger::GetActiveLogger()->LogFormat(level, format, __LINE__, __FILE__, __VA_ARGS__)
+#define MOKA_LOGF(level, format, ...) moka::log::Logger::GetDefaultLogger()->LogFormat(level, format, __LINE__, __FILE__, __VA_ARGS__)
 #define MOKA_LOGF_DEBUG(format, ...) MOKA_LOGF(moka::log::LogLevel::DEBUG, format, __VA_ARGS__)
 #define MOKA_LOGF_INFO(format, ...) MOKA_LOGF(moka::log::LogLevel::INFO, format, __VA_ARGS__)
 #define MOKA_LOGF_WARNING(format, ...) MOKA_LOGF(moka::log::LogLevel::WARNING, format, __VA_ARGS__)
@@ -36,6 +36,7 @@ namespace moka::log
   {
     LogLevel level = LogLevel::DEBUG;
     bool alwaysLogToFile = true;
+    bool appendToFile = false;
     std::string filePath = "";
 
     LoggerConfig(const std::string& logFilePath)
@@ -50,13 +51,15 @@ namespace moka::log
   class Logger
   {
   public:
-    static Logger* GetActiveLogger();
-    static void SetActiveLogger(Logger* logger);
+    static Logger* GetDefaultLogger();
+    static void SetDefaultLogger(Logger* logger);
 
-    void Log(LogLevel level, const std::string& str, size_t line, const char* file);
+    ~Logger();
+
+    void Log(LogLevel level, const std::string& str, size_t line, const char* file) const;
 
     template<typename ... Args>
-    void LogFormat(LogLevel level, const std::string& format, size_t line, const char* file, Args ... args)
+    void LogFormat(LogLevel level, const std::string& format, size_t line, const char* file, Args ... args) const
     {
       // Credit for the formatting goes to this awesome StackOverflow post:
       // https://stackoverflow.com/questions/2342162/stdstring-formatting-like-sprintf
@@ -71,16 +74,18 @@ namespace moka::log
     }
 
     // Warning - config will be moved
-    void SetConfig(LoggerConfig& config);
-    void SetConfig(LoggerConfig&& config);
+    void SetConfig(LoggerConfig& config, bool openFile=true);
+    void SetConfig(LoggerConfig&& config, bool openFile=true);
     const LoggerConfig& GetConfig() const;
 
+    void OpenLogFileFromConfig();
+
   private:
-    static Logger* activeLogger;
+    static Logger* defaultLogger;
+    void SetConfigBase(LoggerConfig&& config, bool openFile);
 
-    std::ofstream logFile;
+    mutable std::ofstream logFile;
     LoggerConfig config;
-
   };
 }
 
