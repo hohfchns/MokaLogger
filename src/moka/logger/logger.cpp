@@ -6,8 +6,58 @@ using std::to_string;
 
 namespace moka::log
 {
-  Logger* Logger::defaultLogger = new Logger;
+  std::unordered_map<std::string, moka::log::Logger> Logger::registry{};
 
+  Logger& Logger::operator=(Logger&& other)
+  {
+    SetConfig(other.config);
+    return *this;
+  }
+
+  Logger& Logger::operator=(const Logger& other)
+  {
+    auto conf = other.config;
+    SetConfig(conf);
+    return *this;
+  }
+
+  Logger::Logger(Logger&& other)
+  {
+    SetConfig(other.config);
+  }
+
+  Logger::Logger()
+  {
+  }
+
+  Logger* Logger::GetLogger(const std::string& id)
+  {
+    auto requested = registry.find(id);
+    if (requested == registry.end())
+    {
+      if (id == "default")
+      {
+        registry["default"] = Logger();
+        return &registry["default"];
+      }
+
+      return nullptr;
+    }
+
+    return &requested->second;
+  }
+
+  Logger* Logger::RegisterLogger(const std::string& id)
+  {
+    auto existing = registry.find(id);
+    if (existing != registry.end())
+    {
+      throw std::runtime_error("Tried to register the same logger twice.");
+    }
+
+    registry[id] = Logger();
+    return &(registry[id]);
+  }
 
   void Logger::Log(LogLevel level, const std::string& str, size_t line, const char* file) const
   {
@@ -30,11 +80,6 @@ namespace moka::log
 
   Logger::~Logger()
   {
-    if (this == Logger::defaultLogger)
-    {
-      MOKA_LOG_ERROR("Default logger was deleted!");
-    }
-
     if (logFile.is_open())
     {
       logFile.close();
@@ -62,7 +107,7 @@ namespace moka::log
     }
   }
 
-  void Logger::SetConfigBase(LoggerConfig&& config, bool openFile)
+  void Logger::SetConfigBase(const LoggerConfig& config, bool openFile)
   {
     if (this->config.filePath == config.filePath)
     {
@@ -100,16 +145,6 @@ namespace moka::log
   const LoggerConfig& Logger::GetConfig() const
   {
     return config;
-  }
-
-  Logger* Logger::GetDefaultLogger()
-  {
-    return defaultLogger;
-  }
-
-  void Logger::SetDefaultLogger(Logger* logger)
-  {
-    defaultLogger = logger;
   }
 }
 

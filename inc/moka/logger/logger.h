@@ -4,17 +4,17 @@
 #include <string>
 #include <unordered_map>
 
-#define MOKA_LOG(level, str) moka::log::Logger::GetDefaultLogger()->Log(level, str, __LINE__, __FILE__)
-#define MOKA_LOG_DEBUG(str) MOKA_LOG(moka::log::LogLevel::DEBUG, str)
-#define MOKA_LOG_INFO(str) MOKA_LOG(moka::log::LogLevel::INFO, str)
-#define MOKA_LOG_WARNING(str) MOKA_LOG(moka::log::LogLevel::WARNING, str)
-#define MOKA_LOG_ERROR(str) MOKA_LOG(moka::log::LogLevel::ERROR, str)
+#define MOKA_LOG(logger, level, str) moka::log::Logger::GetLogger(logger)->Log(level, str, __LINE__, __FILE__)
+#define MOKA_LOG_DEBUG(logger, str) MOKA_LOG(logger, moka::log::LogLevel::DEBUG, str)
+#define MOKA_LOG_INFO(logger, str) MOKA_LOG(logger, moka::log::LogLevel::INFO, str)
+#define MOKA_LOG_WARNING(logger, str) MOKA_LOG(logger, moka::log::LogLevel::WARNING, str)
+#define MOKA_LOG_ERROR(logger, str) MOKA_LOG(logger, moka::log::LogLevel::ERROR, str)
 
-#define MOKA_LOGF(level, format, ...) moka::log::Logger::GetDefaultLogger()->LogFormat(level, format, __LINE__, __FILE__, __VA_ARGS__)
-#define MOKA_LOGF_DEBUG(format, ...) MOKA_LOGF(moka::log::LogLevel::DEBUG, format, __VA_ARGS__)
-#define MOKA_LOGF_INFO(format, ...) MOKA_LOGF(moka::log::LogLevel::INFO, format, __VA_ARGS__)
-#define MOKA_LOGF_WARNING(format, ...) MOKA_LOGF(moka::log::LogLevel::WARNING, format, __VA_ARGS__)
-#define MOKA_LOGF_ERROR(format, ...) MOKA_LOGF(moka::log::LogLevel::ERROR, format, __VA_ARGS__)
+#define MOKA_LOGF(logger, level, format, ...) moka::log::Logger::GetLogger(logger)->LogFormat(level, format, __LINE__, __FILE__, __VA_ARGS__)
+#define MOKA_LOGF_DEBUG(logger, format, ...) MOKA_LOGF(logger, moka::log::LogLevel::DEBUG, format, __VA_ARGS__)
+#define MOKA_LOGF_INFO(logger, format, ...) MOKA_LOGF(logger, moka::log::LogLevel::INFO, format, __VA_ARGS__)
+#define MOKA_LOGF_WARNING(logger, format, ...) MOKA_LOGF(logger, moka::log::LogLevel::WARNING, format, __VA_ARGS__)
+#define MOKA_LOGF_ERROR(logger, format, ...) MOKA_LOGF(logger, moka::log::LogLevel::ERROR, format, __VA_ARGS__)
 
 namespace moka::log
 {
@@ -51,8 +51,13 @@ namespace moka::log
   class Logger
   {
   public:
-    static Logger* GetDefaultLogger();
-    static void SetDefaultLogger(Logger* logger);
+    Logger& operator=(Logger&& other);
+    Logger& operator=(const Logger& other);
+    Logger(Logger&& other);
+    Logger();
+
+    static Logger* GetLogger(const std::string& id);
+    static Logger* RegisterLogger(const std::string& id);
 
     ~Logger();
 
@@ -81,8 +86,9 @@ namespace moka::log
     void OpenLogFileFromConfig();
 
   private:
-    static Logger* defaultLogger;
-    void SetConfigBase(LoggerConfig&& config, bool openFile);
+    static std::unordered_map<std::string, Logger> registry;
+
+    void SetConfigBase(const LoggerConfig& config, bool openFile);
 
     mutable std::ofstream logFile;
     LoggerConfig config;
