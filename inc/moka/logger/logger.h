@@ -1,5 +1,6 @@
 #pragma once
 #include <fstream>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -25,11 +26,18 @@ namespace moka::log
     ERROR = 3
   };
 
-  const std::unordered_map<LogLevel, const std::string> colorCodes = {
-    {LogLevel::ERROR, "\033[1;31m"}, 
-    {LogLevel::WARNING, "\033[1;33m"}, 
-    {LogLevel::INFO, "\033[1;37m"},
+  const std::map<LogLevel, std::string> LOG_LEVEL_STRINGS = {
+    {LogLevel::DEBUG, "DEBUG"},
+    {LogLevel::INFO, "INFO"},
+    {LogLevel::WARNING, "WARNING"},
+    {LogLevel::ERROR, "ERROR"}
+  };
+
+  const std::unordered_map<LogLevel, const std::string> COLOR_CODES = {
     {LogLevel::DEBUG, "\033[2137m"},
+    {LogLevel::INFO, "\033[1;37m"},
+    {LogLevel::WARNING, "\033[1;33m"}, 
+    {LogLevel::ERROR, "\033[1;31m"}
   };
 
   struct LoggerConfig
@@ -39,13 +47,8 @@ namespace moka::log
     bool appendToFile = false;
     std::string filePath = "";
 
-    LoggerConfig(const std::string& logFilePath)
-      : filePath(logFilePath)
-    {
-    }
-    LoggerConfig()
-    {
-    }
+    LoggerConfig(const std::string& logFilePath);
+    LoggerConfig();
   };
 
   class Logger
@@ -82,6 +85,8 @@ namespace moka::log
     void SetConfig(LoggerConfig& config, bool openFile=true);
     void SetConfig(LoggerConfig&& config, bool openFile=true);
     const LoggerConfig& GetConfig() const;
+
+    void SetLevel(LogLevel level);
 
     void OpenLogFileFromConfig();
 

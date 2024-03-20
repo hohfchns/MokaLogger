@@ -64,7 +64,7 @@ namespace moka::log
     std::string formattedStr = "LOG::Level " + to_string(level) + "::FILE `" + file + "`::LINE " + to_string(line) + "::MESSAGE | `" + str + "`";
     if (level >= config.level)
     {
-      std::cout << moka::log::colorCodes.at(level) << formattedStr << "\033[0m" << "\r\n";
+      std::cout << moka::log::COLOR_CODES.at(level) << formattedStr << "\033[0m" << "\r\n";
     }
 
     if (config.filePath.empty())
@@ -142,9 +142,22 @@ namespace moka::log
     SetConfigBase(std::move(config), openFile);
   }
 
+  void Logger::SetLevel(LogLevel level)
+  {
+    config.level = level;
+  }
+
   const LoggerConfig& Logger::GetConfig() const
   {
     return config;
+  }
+
+  LoggerConfig::LoggerConfig(const std::string& logFilePath)
+    : filePath(logFilePath)
+  {
+  }
+  LoggerConfig::LoggerConfig()
+  {
   }
 }
 
@@ -153,24 +166,7 @@ namespace std
 
 std::string to_string(const moka::log::LogLevel& logLevel)
 {
-  std::string str = "";
-  switch (logLevel)
-  {
-    case moka::log::LogLevel::INFO:
-      str = "INFO";
-      break;
-    case moka::log::LogLevel::WARNING:
-      str = "WARNING";
-      break;
-    case moka::log::LogLevel::ERROR:
-      str = "ERROR";
-      break;
-    case moka::log::LogLevel::DEBUG:
-      str = "DEBUG";
-      break;
-  }
-
-  return str;
+  return moka::log::LOG_LEVEL_STRINGS.at(logLevel);
 }
 
 }
